@@ -6,10 +6,7 @@ import           Data.Group
 import           Data.Ratio
 import qualified Data.Set            as Set
 import           MusicalKey.Interval
-
-data Tuning a where
-  Intervals :: Interval a => Set.Set a -> Tuning a
-
+kk
 instance (Show a, Ord a) => Show (Tuning a) where
   show (Intervals set) = "Intervals " ++ show (Set.toAscList set)
 
@@ -36,6 +33,6 @@ octaveIndex list i = if i >= 0 then expandedList !! i
                     where expandedList = mempty : concat (iterate (map (<> maximum list)) list)
 
 (!!!) :: (Interval a) => Scale a -> Degree -> a
-(IntervalScale set) !!! n             = octaveIndex (Set.toAscList set) n
+(IntervalScale set) !!! n                = octaveIndex (Set.toAscList set) n
 (TunedScale (Intervals set) steps) !!! n = octaveIndex (Set.toAscList set) n
 

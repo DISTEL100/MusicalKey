@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module MusicalKey.Interval where
+module MusicalKey.Interval (module MusicalKey.Interval) where
 
 import Data.Group (Group (invert))
 import Data.Ratio (approxRational, (%))

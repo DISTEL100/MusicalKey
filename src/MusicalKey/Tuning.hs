@@ -1,4 +1,4 @@
-module MusicalKey.Tuning () where
+module MusicalKey.Tuning (module MusicalKey.Tuning) where
 
 import Data.Group (Group (pow), (~~))
 import Data.Ratio
@@ -22,7 +22,7 @@ intervalByPitch ts@(TuningSystem _ equivalentInterval) (deg, oct) = intervalByDe
 data Tuning a = Tuning
   { system :: TuningSystem a
   , referenceFreq :: MusicalKey.Interval.Frequency
-  , referenceDegree :: (Int, Int)
+  , referencePitch :: (Int, Int)
   }
   deriving (Show)
 
@@ -32,7 +32,7 @@ freqByDegree (Tuning ts@(TuningSystem _ eqInt) refFreq (refDeg, refEq)) deg =
    in refFreq %>% (degInterval ~~ pow eqInt refEq)
 
 freqByPitch :: (Interval a) => Tuning a -> (Int, Int) -> Frequency
-freqByPitch t@(Tuning ts@(TuningSystem _ eqInt) _ _) (deg, oct) =
+freqByPitch t@(Tuning (TuningSystem _ eqInt) _ _) (deg, oct) =
   freqByDegree t deg %>% pow eqInt oct
 
 edoTuning :: Int -> TuningSystem Cent
@@ -59,3 +59,7 @@ pyth = fromFreqRatios [9 % 8, 81 % 64, 4 % 3, 3 % 2, 27 % 16, 243 % 128, 2]
 pythA440 :: Tuning FreqRatio
 pythA440 = Tuning pyth (Freq 440) (9, 4)
 
+data MidiTuning a = MidiTuning { tuning :: Tuning a, refMidiNote::Int, refPitch::(Int,Int)}
+
+midiNoteByPitch (MidiTuning (Tuning (TuningSystem intSet eqInt) refFreq (refDeg, refOct)) refMidiNote refPitch) = intSet
+  

@@ -1,32 +1,47 @@
-module Tuning where
+module MusicalKey.Tuning () where
 
-import           Data.Group          (invert)
-import qualified Data.Set            as Set
-import           MusicalKey.Interval (Frequency, Interval, (%>%), (%+%), iterateInterval)
+import Data.Group (Group (pow), (~~))
+import Data.Set qualified as Set
+import MusicalKey.Interval
 
-type Degree= Int
+data TuningSystem a = TuningSystem {intervalSet :: Set.Set a, equivalentInterval :: a}
+  deriving (Show)
 
-data TuningSystem a = TuningSystem { intervals::(Interval a)=> Set.Set a, equivalentInterval :: (Interval a) => a }
+intervalByDegree :: Group a => TuningSystem a -> Int -> a
+intervalByDegree (TuningSystem intervalSet eqInterval) degree =
+  let size = Set.size intervalSet :: Int
+      degreeNormalized = degree - 1
+      interval = Set.elemAt (degreeNormalized `mod` size) intervalSet
+      eqClass = pow eqInterval (degreeNormalized `div` size)
+   in eqClass <> interval
 
-class DegreeIndexable a b where 
-  (!!!) :: a -> Degree -> b
+intervalByPitch :: (Group x) => TuningSystem x -> (Int, Int) -> x
+intervalByPitch ts@(TuningSystem _ equivalentInterval) (deg, oct) = intervalByDegree ts deg <> pow equivalentInterval oct
 
-instance (Interval b) => DegreeIndexable (TuningSystem b) b where
- (!!!) (TuningSystem set equi) deg =
-  let size = Set.size set :: Int
-      index = deg `mod` size :: Int
-      eqs = deg `div` size :: Int
-      interval = Set.elemAt index set
-      eqInterval = iterateInterval equi eqs
-    in if deg >= 0 then eqInterval %+% interval else invert eqInterval
+data Tuning a = Tuning
+  { system :: TuningSystem a
+  , referenceFreq :: MusicalKey.Interval.Frequency
+  , referenceDegree :: (Int, Int)
+  }
+  deriving (Show)
 
-data Tuning a = Tuning { system::TuningSystem a, referenceFreq:: Frequency, referenceDegree:: (Degree, Int) }
+freqByDegree :: (Interval a) => Tuning a -> Int -> Frequency
+freqByDegree (Tuning ts@(TuningSystem _ eqInt) refFreq (refDeg, refEq)) deg =
+  let degInterval = intervalByDegree ts deg ~~ intervalByDegree ts refDeg
+   in refFreq %>% (degInterval ~~ pow eqInt refEq)
 
--- TODO make instance of
-instance (Interval a) => DegreeIndexable (Tuning a) Frequency where
-freqOfDegree :: (Interval a) => Tuning a -> (Degree, Int) -> Frequency
-freqOfDegree (Tuning ts@(TuningSystem intSet eqInt) refFreq (refDeg, refEq)) (deg, eq) =
-  let diffEqs = refEq - eq
-      eqInterval = iterateInterval eqInt diffEqs
-      degInterval = (invert  $ ts !!! refDeg) `mappend` (ts !!! deg)
-    in refFreq %>% (mappend eqInterval degInterval)
+freqByPitch :: (Interval a) => Tuning a -> (Int, Int) -> Frequency
+freqByPitch t@(Tuning ts@(TuningSystem _ eqInt) _ _) (deg, oct) =
+  freqByDegree t deg %>% pow eqInt oct
+
+edoTuning :: Int -> TuningSystem Cent
+edoTuning stepsInOctave =
+  let intervals = map (\x -> fromIntegral x / fromIntegral stepsInOctave * 1200) [1 .. stepsInOctave]
+      cents = map Cent intervals
+   in TuningSystem (Set.fromList cents) (Freq 1.0 %% Freq 2.0)
+
+et12 :: TuningSystem Cent
+et12 = edoTuning 12
+
+et12a440 :: Tuning Cent
+et12a440 = Tuning et12 (Freq 440) (9, 4)

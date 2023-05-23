@@ -1,6 +1,7 @@
 module MusicalKey.Tuning () where
 
 import Data.Group (Group (pow), (~~))
+import Data.Ratio
 import Data.Set qualified as Set
 import MusicalKey.Interval
 
@@ -45,3 +46,16 @@ et12 = edoTuning 12
 
 et12a440 :: Tuning Cent
 et12a440 = Tuning et12 (Freq 440) (9, 4)
+
+fromCents :: [Float] -> TuningSystem Cent
+fromCents cents = TuningSystem (Set.fromList $ map Cent cents) (Cent $ maximum cents)
+
+fromFreqRatios :: [Rational] -> TuningSystem FreqRatio
+fromFreqRatios ratios = TuningSystem (Set.fromList $ map FreqRatio ratios) (FreqRatio $ maximum ratios)
+
+pyth :: TuningSystem FreqRatio
+pyth = fromFreqRatios [9 % 8, 81 % 64, 4 % 3, 3 % 2, 27 % 16, 243 % 128, 2]
+
+pythA440 :: Tuning FreqRatio
+pythA440 = Tuning pyth (Freq 440) (9, 4)
+

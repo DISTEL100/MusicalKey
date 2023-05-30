@@ -24,16 +24,14 @@ class MidiTuning a b where
   (!=!) :: a -> b -> MidiNote
 
 instance TuningSystem (Set.Set Interval) Degree where
-  (!%!) set deg =
-    let normalizedSet = Set.insert mempty set
-     in Set.elemAt (deg `mod` Set.size normalizedSet) normalizedSet
+  (!%!) set 0 = Set.elemAt 0 set ~~ Set.elemAt 0 set
+  (!%!) set deg | deg >= 0 = Set.elemAt (pred deg `mod` Set.size set) set
+                | otherwise = invert $ set !%! (-deg)
 
 instance TuningSystem (Set.Set Interval) Pitch where
-  (!%!) a (deg, rep) =
-    let normalizedSet = Set.insert mempty a
-        equivalentInterval = Set.findMax normalizedSet
-        repeats = rep + (deg `div` Set.size normalizedSet)
-     in a !%! deg <> pow equivalentInterval repeats
+  (!%!) a (0, 0) = Set.elemAt 0 a ~~ Set.elemAt 0 a
+  (!%!) a (0, rep) = pow (Set.findMax a) rep
+  (!%!) a (deg, rep) = a !%! deg <> a !%! (0::Degree,rep)
 
 instance TuningSystem [Interval] Degree where
   (!%!) = (!%!) . Set.fromList

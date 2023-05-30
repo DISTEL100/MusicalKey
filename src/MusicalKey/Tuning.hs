@@ -1,65 +1,51 @@
 module MusicalKey.Tuning (module MusicalKey.Tuning) where
 
-import Data.Group (Group (pow), (~~))
-import Data.Ratio
+import Data.Group (Group (pow), (~~), invert)
 import Data.Set qualified as Set
 import MusicalKey.Interval
 
-data TuningSystem a = TuningSystem {intervalSet :: Set.Set a, equivalentInterval :: a}
-  deriving (Show)
+type Degree = Int
+type Repeat = Int
+type Pitch = (Degree, Repeat)
+newtype MidiNote = MidiNote Int
+midiNote :: Int -> MidiNote
+midiNote a
+  | a > 127 = error "a MidiNote must be smaller then 127"
+  | a < 0 = error "a MidiNote must be larger then 0"
+  | otherwise = MidiNote a
 
-intervalByDegree :: Group a => TuningSystem a -> Int -> a
-intervalByDegree (TuningSystem intervalSet eqInterval) degree =
-  let size = Set.size intervalSet :: Int
-      degreeNormalized = degree - 1
-      interval = Set.elemAt (degreeNormalized `mod` size) intervalSet
-      eqClass = pow eqInterval (degreeNormalized `div` size)
-   in eqClass <> interval
+class TuningSystem a b where
+  (!%!) :: a -> b -> Interval
 
-intervalByPitch :: (Group x) => TuningSystem x -> (Int, Int) -> x
-intervalByPitch ts@(TuningSystem _ equivalentInterval) (deg, oct) = intervalByDegree ts deg <> pow equivalentInterval oct
+class Tuning a b where
+  (!>!) :: a -> b -> Frequency
 
-data Tuning a = Tuning
-  { system :: TuningSystem a
-  , referenceFreq :: MusicalKey.Interval.Frequency
-  , referencePitch :: (Int, Int)
-  }
-  deriving (Show)
+class MidiTuning a b where
+  (!=!) :: a -> b -> MidiNote
 
-freqByDegree :: (Interval a) => Tuning a -> Int -> Frequency
-freqByDegree (Tuning ts@(TuningSystem _ eqInt) refFreq (refDeg, refEq)) deg =
-  let degInterval = intervalByDegree ts deg ~~ intervalByDegree ts refDeg
-   in refFreq %>% (degInterval ~~ pow eqInt refEq)
+instance TuningSystem (Set.Set Interval) Degree where
+  (!%!) set deg =
+    let normalizedSet = Set.insert mempty set
+     in Set.elemAt (deg `mod` Set.size normalizedSet) normalizedSet
 
-freqByPitch :: (Interval a) => Tuning a -> (Int, Int) -> Frequency
-freqByPitch t@(Tuning (TuningSystem _ eqInt) _ _) (deg, oct) =
-  freqByDegree t deg %>% pow eqInt oct
+instance TuningSystem (Set.Set Interval) Pitch where
+  (!%!) a (deg, rep) =
+    let normalizedSet = Set.insert mempty a
+        equivalentInterval = Set.findMax normalizedSet
+        repeats = rep + (deg `div` Set.size normalizedSet)
+     in a !%! deg <> pow equivalentInterval repeats
 
-edoTuning :: Int -> TuningSystem Cent
-edoTuning stepsInOctave =
-  let intervals = map (\x -> fromIntegral x / fromIntegral stepsInOctave * 1200) [1 .. stepsInOctave]
-      cents = map Cent intervals
-   in TuningSystem (Set.fromList cents) (Freq 1.0 %% Freq 2.0)
+instance TuningSystem [Interval] Degree where
+  (!%!) = (!%!) . Set.fromList
 
-et12 :: TuningSystem Cent
-et12 = edoTuning 12
+instance TuningSystem [Interval] Pitch where
+  (!%!) = (!%!) . Set.fromList
 
-et12a440 :: Tuning Cent
-et12a440 = Tuning et12 (Freq 440) (9, 4)
+data TunedByReference a b c = ByRef {tuningSystem :: (TuningSystem a b) => a, reference :: b, referenceFreq :: Frequency}
 
-fromCents :: [Float] -> TuningSystem Cent
-fromCents cents = TuningSystem (Set.fromList $ map Cent cents) (Cent $ maximum cents)
+instance Tuning (TunedByReference a b c) b where
+  ByRef {tuningSystem = ts, reference = ref, referenceFreq = refF} !>! b = 
+    let interval = ts !%! b :: Interval
+        refInterval = invert $ ts !%! ref :: Interval
+    in Freq 1.0
 
-fromFreqRatios :: [Rational] -> TuningSystem FreqRatio
-fromFreqRatios ratios = TuningSystem (Set.fromList $ map FreqRatio ratios) (FreqRatio $ maximum ratios)
-
-pyth :: TuningSystem FreqRatio
-pyth = fromFreqRatios [9 % 8, 81 % 64, 4 % 3, 3 % 2, 27 % 16, 243 % 128, 2]
-
-pythA440 :: Tuning FreqRatio
-pythA440 = Tuning pyth (Freq 440) (9, 4)
-
-data MidiTuning a = MidiTuning { tuning :: Tuning a, refMidiNote::Int, refPitch::(Int,Int)}
-
-midiNoteByPitch (MidiTuning (Tuning (TuningSystem intSet eqInt) refFreq (refDeg, refOct)) refMidiNote refPitch) = intSet
-  

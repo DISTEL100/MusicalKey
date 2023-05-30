@@ -1,6 +1,6 @@
 module MusicalKey.Tuning (module MusicalKey.Tuning) where
 
-import Data.Group (Group (pow), (~~), invert)
+import Data.Group (Group (pow), invert, (~~))
 import Data.Set qualified as Set
 import MusicalKey.Interval
 
@@ -41,11 +41,11 @@ instance TuningSystem [Interval] Degree where
 instance TuningSystem [Interval] Pitch where
   (!%!) = (!%!) . Set.fromList
 
-data TunedByReference a b c = ByRef {tuningSystem :: (TuningSystem a b) => a, reference :: b, referenceFreq :: Frequency}
+data TunedByReference a b where
+  ByRef :: TuningSystem a b => {tuningSystem :: a, reference :: b, referenceFreq :: Frequency} -> TunedByReference a b
 
-instance Tuning (TunedByReference a b c) b where
-  ByRef {tuningSystem = ts, reference = ref, referenceFreq = refF} !>! b = 
+instance Tuning (TunedByReference a b) b where
+  ByRef{tuningSystem = ts, reference = ref, referenceFreq = refF} !>! b =
     let interval = ts !%! b :: Interval
-        refInterval = invert $ ts !%! ref :: Interval
-    in Freq 1.0
-
+        refInterval = ts !%! ref :: Interval
+     in refF <<> refInterval <>> interval

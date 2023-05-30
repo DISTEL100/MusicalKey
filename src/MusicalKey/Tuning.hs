@@ -24,14 +24,18 @@ class MidiTuning a b where
   (!=!) :: a -> b -> MidiNote
 
 instance TuningSystem (Set.Set Interval) Degree where
-  (!%!) set 0 = Set.elemAt 0 set ~~ Set.elemAt 0 set
-  (!%!) set deg | deg >= 0 = Set.elemAt (pred deg `mod` Set.size set) set
-                | otherwise = invert $ set !%! (-deg)
+  (!%!) set deg
+    | Set.null set = mempty
+    | deg == 0 = Set.elemAt 0 set ~~ Set.elemAt 0 set
+    | deg > 0 =
+        let dm = divMod (pred deg) $ Set.size set
+         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm)
+    | otherwise = invert $ set !%! (-deg)
 
 instance TuningSystem (Set.Set Interval) Pitch where
   (!%!) a (0, 0) = Set.elemAt 0 a ~~ Set.elemAt 0 a
   (!%!) a (0, rep) = pow (Set.findMax a) rep
-  (!%!) a (deg, rep) = a !%! deg <> a !%! (0::Degree,rep)
+  (!%!) a (deg, rep) = a !%! deg <> a !%! (0 :: Degree, rep)
 
 instance TuningSystem [Interval] Degree where
   (!%!) = (!%!) . Set.fromList
@@ -40,7 +44,7 @@ instance TuningSystem [Interval] Pitch where
   (!%!) = (!%!) . Set.fromList
 
 data TunedByReference a b where
-  ByRef :: TuningSystem a b => {tuningSystem :: a, reference :: b, referenceFreq :: Frequency} -> TunedByReference a b
+  ByRef :: (TuningSystem a b) => {tuningSystem :: a, reference :: b, referenceFreq :: Frequency} -> TunedByReference a b
 
 instance Tuning (TunedByReference a b) b where
   ByRef{tuningSystem = ts, reference = ref, referenceFreq = refF} !>! b =

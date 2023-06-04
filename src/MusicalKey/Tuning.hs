@@ -7,7 +7,8 @@ import MusicalKey.Interval
 type Degree = Int
 type Repeat = Int
 type Pitch = (Degree, Repeat)
-newtype MidiNote = MidiNote Int
+
+newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
 midiNote :: Int -> MidiNote
 midiNote a
   | a > 127 = error "a MidiNote must be smaller then 127"
@@ -43,11 +44,29 @@ instance TuningSystem [Interval] Degree where
 instance TuningSystem [Interval] Pitch where
   (!%!) = (!%!) . Set.fromList
 
-data TunedByReference a b where
-  ByRef :: (TuningSystem a b) => {tuningSystem :: a, reference :: b, referenceFreq :: Frequency} -> TunedByReference a b
+data TunedByRef a b where
+  TunedByRef :: (TuningSystem a b) => {tuningSystem :: a, reference :: b, refFreq :: Frequency} -> TunedByRef a b
 
-instance Tuning (TunedByReference a b) b where
-  ByRef{tuningSystem = ts, reference = ref, referenceFreq = refF} !>! b =
-    let interval = ts !%! b :: Interval
-        refInterval = ts !%! ref :: Interval
-     in refF <<> refInterval <>> interval
+instance Tuning (TunedByRef a b) b where
+  TunedByRef {tuningSystem = ts, reference = ref, refFreq = refF} !>! b = tuneByRef ts ref refF b
+
+tuneByRef :: (TuningSystem a b) => a -> b -> Frequency -> b -> Frequency
+tuneByRef a refB refF b =
+  let interval = a !%! b :: Interval
+      refInterval = a !%! refB :: Interval
+   in refF <<> refInterval <>> interval
+
+midiTuneByRef :: (Enum a) => a -> MidiNote -> a -> MidiNote
+midiTuneByRef refB (MidiNote refMidiNote) b = MidiNote $ (fromEnum b - fromEnum refB) + refMidiNote
+
+instance MidiTuning (MidiTuningByRef a Degree) Degree where
+ MidiTuningByRef {tuning=t, refB=refB, refMidiNote=refMidiNote} !=! b = midiTuneByRef refB refMidiNote b
+ MidiTuningSystemByRef {tuningSys=ts, refB=refB, refMidiNote=refMidiNote} !=! b = midiTuneByRef refB refMidiNote b
+
+instance MidiTuning (MidiTuningByRef a Pitch) Pitch where
+ MidiTuningByRef {tuning=t, refB=refB, refMidiNote=refMidiNote} !=! b = midiTuneByRef refB refMidiNote b
+ MidiTuningSystemByRef {tuningSys=ts, refB=refB, refMidiNote=refMidiNote} !=! b = midiTuneByRef refB refMidiNote b
+
+data MidiTuningByRef a b where
+  MidiTuningByRef :: (Tuning a b) => {tuning :: a, refB :: b, refMidiNote :: MidiNote} -> MidiTuningByRef a b
+  MidiTuningSystemByRef :: (TuningSystem a b) => {tuningSys :: a, refB :: b, refMidiNote :: MidiNote} -> MidiTuningByRef a b

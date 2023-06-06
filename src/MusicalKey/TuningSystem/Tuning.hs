@@ -1,4 +1,4 @@
-module MusicalKey.TuningSystem.Tuning where
+module MusicalKey.TuningSystem.Tuning (midiNote, Tuning (..), MidiTuning, FreqTuning, (!>), (!=) ) where 
 
 import Data.Group
 import Data.Map (Map)
@@ -23,24 +23,19 @@ data Tuning a b c
 type MidiTuning a b = Tuning a b MidiNote
 type FreqTuning a b = Tuning a b Frequency
 
-(!>!) :: FreqTuning a b -> Pitch b -> Frequency
-TunedDirect tFunc !>! pitch = tFunc pitch
-TunedByMap mapping !>! pitch = mapping M.! pitch
-TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !%! pitch
-TunedByRef tSystem refPitch refC !>! pitch =
-  let interval = tSystem !%! pitch :: Interval
-      refInterval = tSystem !%! refPitch :: Interval
-   in refC <<> refInterval <>> interval
+(!>) :: FreqTuning a b -> Pitch b -> Frequency
+TunedDirect tFunc !> pitch = tFunc pitch
+TunedByMap mapping !> pitch = mapping M.! pitch
+TunedByFunc tSystem tFunc !> pitch = tFunc $ tSystem !% pitch
+TunedByRef tSystem refPitch refC !> pitch =
+  let interval = tSystem !% pitch :: Interval
+      refInterval = tSystem !% refPitch :: Interval
+   in refC <>> (interval ~~ refInterval)
 
-degreesInOctave ::(IsPitch b, TuningSystem a b) => a -> Int
-degreesInOctave ts = degreesInOctave' ts (mempty::Pitch b) 0 
-  where degreesInOctave' :: (IsPitch b, TuningSystem a b) => a -> Pitch b -> Int -> Int
-        degreesInOctave' ts accP acc = 0
-
-(!=!) :: MidiTuning a b -> Pitch b -> MidiNote
-TunedDirect tFunc !=! pitch = tFunc pitch
-TunedByMap mapping !=! pitch = mapping M.! pitch
-TunedByFunc tSystem tFunc !=! pitch = tFunc $ tSystem !%! pitch
-TunedByRef tSystem refPitch@(Pitch refP) refMidiNote@(MidiNote m) !=! pitch@(Pitch p)
+(!=) :: MidiTuning a b -> Pitch b -> MidiNote
+TunedDirect tFunc != pitch = tFunc pitch
+TunedByMap mapping != pitch = mapping M.! pitch
+TunedByFunc tSystem tFunc != pitch = tFunc $ tSystem !% pitch
+TunedByRef tSystem refPitch refMidiNote@(MidiNote m) != pitch
   | refPitch == pitch = refMidiNote
-  | rep refP == rep p = MidiNote $ m + (deg refP - deg p)
+  | otherwise = MidiNote $ m + degreesBetween tSystem refPitch pitch

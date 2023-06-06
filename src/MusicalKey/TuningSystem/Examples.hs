@@ -2,18 +2,17 @@ module MusicalKey.TuningSystem.Examples (module MusicalKey.TuningSystem.Examples
 
 import Data.Set qualified as Set
 import MusicalKey.Interval
-import MusicalKey.TuningSystem
 import MusicalKey.TuningSystem.Tuning
-import MusicalKey.TuningSystem.MidiTuning
-import MusicalKey.Pitch (Pitch)
+import MusicalKey.Pitch (Pitch (Pitch))
 
 et12 :: Set.Set Interval
 et12 = Set.fromList $ map Cent [100, 200 .. 1200]
+ 
+a4 :: Pitch (Int,Int)
+a4 = Pitch (9,4)
 
-createA440Tuning :: (TuningSystem a (Pitch b)) => a -> Tuning a (Pitch b)
-createA440Tuning a = TunedByRef a (pitch 9 4) (Freq 440)
+et12A440 :: FreqTuning (Set.Set Interval) (Int,Int)
+et12A440 = TunedByRef et12 a4 (Freq 440)
 
-et12A440 = createA440Tuning et12
-
-et12A440M64 :: MidiTuningByRef (TunedByRef (Set.Set Interval) Pitch) Pitch
-et12A440M64 = MidiTuningByRef et12A440 (pitch 9 4) (MidiNote 64)
+et12M64 :: MidiTuning (Set.Set Interval) (Int,Int)
+et12M64 = TunedByRef et12 a4 (midiNote 69)

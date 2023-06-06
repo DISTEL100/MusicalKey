@@ -1,4 +1,4 @@
-module MusicalKey.Pitch where
+module MusicalKey.Pitch (module MusicalKey.Pitch) where 
 
 import Data.Group (Group (invert))
 

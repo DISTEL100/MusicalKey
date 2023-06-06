@@ -1,7 +1,7 @@
 module MusicalKey.Interval (module MusicalKey.Interval) where
 
 import Data.Group (Abelian, Group (invert), (~~))
-import Data.Ratio
+import Data.Ratio ( approxRational, (%) )
 import GHC.Real (Ratio ((:%)))
 
 newtype Frequency = Freq Float deriving (Enum, Ord, Eq, Show)
@@ -39,7 +39,7 @@ cents :: Frequency -> Frequency -> Interval
 cents (Freq f1) (Freq f2) = Cent $ 1200 * logBase 2 (f2 / f1)
 
 ratio :: Frequency -> Frequency -> Interval
-ratio (Freq f1) (Freq f2) = Ratio $ approxRational (f2 / f1) 0.000001
+ratio (Freq f1) (Freq f2) = Ratio $ approxRational (f2 / f1) 0.000000001
 
 (<>>) :: Frequency -> Interval -> Frequency
 Freq f <>> Cent b = Freq $ f * 2 ** (b / 1200)

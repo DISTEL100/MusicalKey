@@ -18,9 +18,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     MusicalKey.Interval,
                        MusicalKey.TuningSystem,
+                       MusicalKey.Pitch,
                        MusicalKey.TuningSystem.Examples,
-                       MusicalKey.TuningSystem.Tuning,
-                       MusicalKey.TuningSystem.MidiTuning
+                       MusicalKey.TuningSystem.Tuning
   build-depends:       base >= 4.7 && < 5,
                        containers >=0.6 && <0.7,
                        groups >=0.5.0 && <0.6.0

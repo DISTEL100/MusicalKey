@@ -1,42 +1,29 @@
 module MusicalKey.TuningSystem (module MusicalKey.TuningSystem) where
 
 import Data.Group (Group (pow), invert, (~~))
+import Data.Map qualified as M
 import Data.Set qualified as Set
 import MusicalKey.Interval
+import MusicalKey.Pitch (IsPitch (deg, rep))
 
-type Degree = Int
-degr :: Int -> Degree
-degr i = i
+class IsPitch b => TuningSystem a b where
+  ( !%!) :: a -> b -> Interval
 
-type Repeat = Int
-
-type Pitch = (Degree, Repeat)
-pitch :: Int -> Int -> Pitch
-pitch deg rep = (deg, rep)
-
-pitchToDegree :: Pitch -> Int -> Degree
-pitchToDegree (deg, rep) repeatSize = repeatSize * rep + deg
-
-class TuningSystem a b where
-  (!%!) :: a -> b -> Interval
-
-instance TuningSystem (Set.Set Interval) Degree where
-  (!%!) set deg
+instance (IsPitch b) => TuningSystem (Set.Set Interval) b where
+  set !%! p
     | Set.null set = mempty
-    | deg == 0 = Set.elemAt 0 set ~~ Set.elemAt 0 set
-    | deg > 0 =
-        let dm = divMod (pred deg) $ Set.size set
-         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm)
-    | otherwise = invert $ set !%! (-deg)
+    | deg p == 0 = memptyOf $ Set.elemAt 0 set
+    | deg p > 0 =
+        let dm = divMod (pred (deg p)) $ Set.size set
+         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + rep p)
+    | otherwise = invert $ set !%! (-(deg p))
 
-instance TuningSystem (Set.Set Interval) Pitch where
-  (!%!) a (0, 0) = Set.elemAt 0 a ~~ Set.elemAt 0 a
-  (!%!) a (0, rep) = pow (Set.findMax a) rep
-  (!%!) a (deg, rep) = a !%! deg <> a !%! (0 :: Degree, rep)
-
-instance TuningSystem [Interval] Degree where
+instance (IsPitch a) => TuningSystem [Interval] a where
   (!%!) = (!%!) . Set.fromList
 
-instance TuningSystem [Interval] Pitch where
-  (!%!) = (!%!) . Set.fromList
+instance (Ord b, IsPitch b) => TuningSystem (M.Map b Interval) b where
+  freqMap !%! b = freqMap M.! b
 
+data EqDivTuning = EqDivTuning {divisions :: Int, repInterval :: Interval}
+data PythagoreanTuning = PythagoreanTuning {generator :: Interval, size :: Int, foldInterval :: Interval}
+-- data PrimeLimitTuning =

@@ -1,6 +1,6 @@
 module MusicalKey.Interval (module MusicalKey.Interval) where
 
-import Data.Group (Abelian, Group (invert))
+import Data.Group (Abelian, Group (invert), (~~))
 import Data.Ratio
 import GHC.Real (Ratio ((:%)))
 
@@ -56,3 +56,6 @@ approxRatio (Cent a) = Ratio $ approxRational (2 ** (a / 1200)) 0.000001
 approxCent :: Interval -> Interval
 approxCent (Cent a) = Cent a
 approxCent (Ratio (f1 :% f2)) = cents (Freq $ fromInteger f1) (Freq $ fromInteger f2)
+
+memptyOf :: Interval -> Interval
+memptyOf i = i ~~ i

@@ -8,8 +8,8 @@ import qualified Data.Set as Set
 newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
 midiNote :: Int -> MidiNote
 midiNote a
-  | a > 127 = error "a MidiNote must be smaller then 127"
-  | a < 0 = error "a MidiNote must be larger then 0"
+  | a > 127 = error "a MidiNote must be smaller then 128"
+  | a < 0 = error "a MidiNote must be greater or equal 0"
   | otherwise = MidiNote a
 
 class MidiTuning a b where

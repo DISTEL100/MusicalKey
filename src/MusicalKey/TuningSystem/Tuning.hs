@@ -1,25 +1,40 @@
 module MusicalKey.TuningSystem.Tuning where
 
-import MusicalKey.TuningSystem
+import Data.Map (Map)
+import Data.Map qualified as M
 import MusicalKey.Interval
-import qualified Data.Map as M
-import MusicalKey.Pitch (IsPitch)
+import Data.Group
+import MusicalKey.Pitch
+import MusicalKey.TuningSystem
 
-class IsPitch b => Tuning a b where
-  (!>!) :: a -> b -> Frequency
+newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
+midiNote :: Int -> MidiNote
+midiNote a
+  | a > 127 = error "a MidiNote must be smaller then 128"
+  | a < 0 = error "a MidiNote must be greater or equal 0"
+  | otherwise = MidiNote a
 
-data  TunedByRef a b where
-  TunedByRef :: (IsPitch b, TuningSystem a b) => {system :: a, reference :: b, refFreq :: Frequency} -> TunedByRef a b
+data Tuning a b c
+  = (IsPitch b, TuningSystem a b) => TunedByRef a (Pitch b) c
+  | (IsPitch b, TuningSystem a b) => TunedByFunc a (Interval -> c)
+  | (IsPitch b, TuningSystem a b) => TunedByMap (Map (Pitch b) c)
+  | TunedDirect (Pitch b -> c)
 
-instance (IsPitch b) => Tuning (TunedByRef a b) b where
-  TunedByRef {system = ts, reference = ref, refFreq = refF} !>! b = tuneByRef ts ref refF b
+type MidiTuning a b = Tuning a b MidiNote
+type FreqTuning a b = Tuning a b Frequency
 
-tuneByRef :: (TuningSystem a b) => a -> b -> Frequency -> b -> Frequency
-tuneByRef a refB refF b =
-  let interval = a !%! b :: Interval
-      refInterval = a !%! refB :: Interval
-   in refF <<> refInterval <>> interval
+(!>!) :: FreqTuning a b -> Pitch b -> Frequency
+TunedDirect tFunc !>! pitch = tFunc pitch
+TunedByMap mapping !>! pitch = mapping M.! pitch
+TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !%! pitch 
+TunedByRef tSystem refPitch refC !>! pitch = 
+  let interval = tSystem !%! pitch :: Interval
+      refInterval = tSystem !%! refPitch :: Interval
+   in refC <<> refInterval <>> interval
 
-instance (IsPitch b, Ord b) => Tuning (M.Map b Frequency) b where
-  freqMap !>! b = freqMap M.! b
-
+(!=!) :: MidiTuning a b -> Pitch b -> MidiNote
+TunedDirect tFunc !=! pitch = tFunc pitch
+TunedByMap mapping !=! pitch = mapping M.! pitch
+TunedByFunc tSystem tFunc !=! pitch = tFunc $ tSystem !%! pitch 
+TunedByRef tSystem refPitch refC !=! pitch@(Pitch p) = let diffPitch = refPitch ~~ pitch
+                                                 in MidiNote 33

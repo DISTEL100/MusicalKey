@@ -1,9 +1,9 @@
 module MusicalKey.TuningSystem.Tuning where
 
+import Data.Group
 import Data.Map (Map)
 import Data.Map qualified as M
 import MusicalKey.Interval
-import Data.Group
 import MusicalKey.Pitch
 import MusicalKey.TuningSystem
 
@@ -26,15 +26,21 @@ type FreqTuning a b = Tuning a b Frequency
 (!>!) :: FreqTuning a b -> Pitch b -> Frequency
 TunedDirect tFunc !>! pitch = tFunc pitch
 TunedByMap mapping !>! pitch = mapping M.! pitch
-TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !%! pitch 
-TunedByRef tSystem refPitch refC !>! pitch = 
+TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !%! pitch
+TunedByRef tSystem refPitch refC !>! pitch =
   let interval = tSystem !%! pitch :: Interval
       refInterval = tSystem !%! refPitch :: Interval
    in refC <<> refInterval <>> interval
 
+degreesInOctave ::(IsPitch b, TuningSystem a b) => a -> Int
+degreesInOctave ts = degreesInOctave' ts (mempty::Pitch b) 0 
+  where degreesInOctave' :: (IsPitch b, TuningSystem a b) => a -> Pitch b -> Int -> Int
+        degreesInOctave' ts accP acc = 0
+
 (!=!) :: MidiTuning a b -> Pitch b -> MidiNote
 TunedDirect tFunc !=! pitch = tFunc pitch
 TunedByMap mapping !=! pitch = mapping M.! pitch
-TunedByFunc tSystem tFunc !=! pitch = tFunc $ tSystem !%! pitch 
-TunedByRef tSystem refPitch refC !=! pitch@(Pitch p) = let diffPitch = refPitch ~~ pitch
-                                                 in MidiNote 33
+TunedByFunc tSystem tFunc !=! pitch = tFunc $ tSystem !%! pitch
+TunedByRef tSystem refPitch@(Pitch refP) refMidiNote@(MidiNote m) !=! pitch@(Pitch p)
+  | refPitch == pitch = refMidiNote
+  | rep refP == rep p = MidiNote $ m + (deg refP - deg p)

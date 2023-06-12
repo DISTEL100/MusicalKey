@@ -1,8 +1,9 @@
 module MusicalKey.TuningSystem.Examples (module MusicalKey.TuningSystem.Examples) where
 
 import Data.Set qualified as Set
-import MusicalKey.Interval
+import MusicalKey.Interval ( Interval(Cent), Frequency(Freq) )
 import MusicalKey.TuningSystem.Tuning
+    ( FreqTuning, MidiTuning, Tuning(TunedByRef), midiNote )
 import MusicalKey.Pitch (Pitch (Pitch))
 
 et12 :: Set.Set Interval

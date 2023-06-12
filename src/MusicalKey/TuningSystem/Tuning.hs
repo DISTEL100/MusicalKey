@@ -1,11 +1,11 @@
-module MusicalKey.TuningSystem.Tuning (midiNote, Tuning (..), MidiTuning, FreqTuning, (!>), (!=) ) where 
+module MusicalKey.TuningSystem.Tuning (midiNote, MidiNote, Tuning (..), MidiTuning, FreqTuning, (!>), (!=) ) where 
 
-import Data.Group
+import Data.Group ( Group((~~)) )
 import Data.Map (Map)
 import Data.Map qualified as M
-import MusicalKey.Interval
-import MusicalKey.Pitch
-import MusicalKey.TuningSystem
+import MusicalKey.Interval ( Interval, Frequency, (<>>) )
+import MusicalKey.Pitch ( Pitch, IsPitch )
+import MusicalKey.TuningSystem ( TuningSystem(..), degreesBetween )
 
 newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
 midiNote :: Int -> MidiNote

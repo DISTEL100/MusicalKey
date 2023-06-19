@@ -4,9 +4,9 @@ import Data.Group (Abelian, Group (invert), (~~))
 import Data.Ratio ( approxRational, (%) )
 import GHC.Real (Ratio ((:%)))
 
-newtype Frequency = Freq Float deriving (Enum, Ord, Eq, Show)
+newtype Frequency = Freq Double deriving (Enum, Ord, Eq, Show)
 
-data Interval = Cent Float | Ratio Rational deriving (Show)
+data Interval = Cent Double | Ratio Rational deriving (Show)
 
 instance Eq Interval where
   (Cent a) == Cent b = a == b

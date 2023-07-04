@@ -8,7 +8,7 @@ class IsPitch a where
   rep _ = 0
   toPitch :: Int -> Int -> a
 
-newtype Pitch a = Pitch a
+newtype Pitch a = Pitch a deriving (Show)
 
 instance IsPitch a => Eq (Pitch a) where
   Pitch p1 == Pitch p2 = rep p1 == rep p2 && deg p1 == deg p2

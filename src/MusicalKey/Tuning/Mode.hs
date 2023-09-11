@@ -1,8 +1,14 @@
 module MusicalKey.Tuning.Mode ( module MusicalKey.Tuning.Mode) where
 import MusicalKey.Pitch
 
-data Mode a = Mode {root:: a, scale::[Int]} 
+data Mode  = Mode {root:: Int, scale::[Int]} deriving Show
 
-instance (Show a) => Show (Mode a) where
-  show (Mode r s) = "Mode {root=" ++ show r ++", scale=" ++ show s ++ "}"
+scalePitch :: (IsPitch p) => Mode -> Pitch p -> Pitch p
+scalePitch (Mode{root=r,scale=s}) p
+  = let rooted = r + deg p :: Int
+        size = length s
+        dm = divMod (deg p) size
+        newRep = rep p + fst dm
+        newDeg = rooted + deg p + s!!snd dm
+    in  toPitch newDeg newRep
 

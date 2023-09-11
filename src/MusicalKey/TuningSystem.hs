@@ -10,11 +10,11 @@ class TuningSystem a b where
   (!%) :: a -> Pitch b -> Interval
 
 instance IsPitch b => TuningSystem (Set.Set Interval) b where
-  set !% pitch@(Pitch p)
+  set !% pitch
     | Set.null set = mempty
-    | deg p <= 0 =
-        let dm = divMod (pred (deg p)) $ Set.size set
-         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + rep p)
+    | deg pitch <= 0 =
+        let dm = divMod (pred (deg pitch)) $ Set.size set
+         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + rep pitch)
     | otherwise = invert $ set !% invert pitch
 
 instance IsPitch b => TuningSystem [Interval] b where
@@ -27,7 +27,7 @@ degreesBetween :: (IsPitch b, TuningSystem a b) => a -> Pitch b -> Pitch b -> In
 degreesBetween ts p1 p2 = degreesBetween' ts p1 p2 0
 
 degreesBetween' :: (IsPitch b, TuningSystem a b) => a -> Pitch b -> Pitch b -> Int -> Int
-degreesBetween' ts p1@(Pitch pp1) p2 acc
+degreesBetween' ts p1 p2 acc
   | ts !% p1 == ts !% p2 = acc
-  | ts !% p1 < ts !% p2 = degreesBetween' ts (Pitch (toPitch (deg pp1 + 1) (rep pp1))) p2 (acc + 1)
+  | ts !% p1 < ts !% p2 = degreesBetween' ts (toPitch (deg p1 + 1) (rep p1)) p2 (acc + 1)
   | otherwise = -(degreesBetween' ts p2 p1 acc)

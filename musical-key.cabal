@@ -20,7 +20,8 @@ library
                        MusicalKey.TuningSystem,
                        MusicalKey.Pitch,
                        MusicalKey.Tuning.Examples,
-                       MusicalKey.Tuning.Tuning
+                       MusicalKey.Tuning.Tuning,
+                       MusicalKey.Tuning.Mode
   build-depends:       base >= 4.7 && < 5,
                        containers >=0.6 && <0.7,
                        groups >=0.5.0 && <0.6.0

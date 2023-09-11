@@ -35,11 +35,14 @@ instance Group Interval where
 
 instance Abelian Interval
 
+accuracy :: Double
+accuracy = 0.0000001
+
 cents :: Frequency -> Frequency -> Interval
 cents (Freq f1) (Freq f2) = Cent $ 1200 * logBase 2 (f2 / f1)
 
 ratio :: Frequency -> Frequency -> Interval
-ratio (Freq f1) (Freq f2) = Ratio $ approxRational (f2 / f1) 0.000000001
+ratio (Freq f1) (Freq f2) = Ratio $ approxRational (f2 / f1) accuracy
 
 (<>>) :: Frequency -> Interval -> Frequency
 Freq f <>> Cent b = Freq $ f * 2 ** (b / 1200)
@@ -51,7 +54,7 @@ Freq f <<> Ratio (a :% b) = Freq $ f * fromRational (b :% a)
 
 approxRatio :: Interval -> Interval
 approxRatio (Ratio a) = Ratio a
-approxRatio (Cent a) = Ratio $ approxRational (2 ** (a / 1200)) 0.000001
+approxRatio (Cent a) = Ratio $ approxRational (2 ** (a / 1200)) accuracy
 
 approxCent :: Interval -> Interval
 approxCent (Cent a) = Cent a

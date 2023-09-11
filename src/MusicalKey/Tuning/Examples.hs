@@ -1,8 +1,8 @@
-module MusicalKey.TuningSystem.Examples (module MusicalKey.TuningSystem.Examples) where
+module MusicalKey.Tuning.Examples (module MusicalKey.Tuning.Examples) where
 
 import Data.Set qualified as Set
 import MusicalKey.Interval ( Interval(Cent), Frequency(Freq) )
-import MusicalKey.TuningSystem.Tuning
+import MusicalKey.Tuning.Tuning
     ( FreqTuning, MidiTuning, Tuning(TunedByRef), midiNote )
 import MusicalKey.Pitch (Pitch (Pitch))
 

@@ -19,8 +19,8 @@ library
   exposed-modules:     MusicalKey.Interval,
                        MusicalKey.TuningSystem,
                        MusicalKey.Pitch,
-                       MusicalKey.TuningSystem.Examples,
-                       MusicalKey.TuningSystem.Tuning
+                       MusicalKey.Tuning.Examples,
+                       MusicalKey.Tuning.Tuning
   build-depends:       base >= 4.7 && < 5,
                        containers >=0.6 && <0.7,
                        groups >=0.5.0 && <0.6.0

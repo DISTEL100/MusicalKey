@@ -1,4 +1,4 @@
-module MusicalKey.TuningSystem.Tuning (midiNote, MidiNote, Tuning (..), MidiTuning, FreqTuning, StdFreqTuning, StdMidiTuning, (!>), (!=)) where
+module MusicalKey.Tuning.Tuning (midiNote, MidiNote, Tuning (..), MidiTuning, FreqTuning, StdFreqTuning, StdMidiTuning, (!>), (!=)) where
 
 import Data.Group (Group ((~~)))
 import Data.Map (Map)
@@ -15,11 +15,11 @@ midiNote a
   | a < 0 = error "a MidiNote must be greater or equal 0"
   | otherwise = MidiNote a
 
-data Tuning a b c
-  = (IsPitch b, TuningSystem a b) => TunedByRef a (Pitch b) c
-  | (IsPitch b, TuningSystem a b) => TunedByFunc a (Interval -> c)
-  | (IsPitch b, TuningSystem a b) => TunedByMap (Map (Pitch b) c)
-  | TunedDirect (Pitch b -> c)
+data Tuning ts p out
+  = (IsPitch p, TuningSystem ts p) => TunedByRef ts (Pitch p) out
+  | (IsPitch p, TuningSystem ts p) => TunedByFunc ts (Interval -> out)
+  | (IsPitch p, TuningSystem ts p) => TunedByMap (Map (Pitch p) out)
+  | TunedDirect (Pitch p -> out)
 
 type MidiTuning a b = Tuning a b MidiNote
 type FreqTuning a b = Tuning a b Frequency

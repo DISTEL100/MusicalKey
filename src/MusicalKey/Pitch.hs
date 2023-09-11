@@ -10,6 +10,15 @@ class IsPitch a where
 
 newtype Pitch a = Pitch a deriving (Show)
 
+instance IsPitch (Int, Int) where
+  deg = fst
+  rep = snd
+  toPitch d r = (d, r)
+
+instance IsPitch Int where
+  deg = id
+  toPitch i _ = i
+
 instance IsPitch a => Eq (Pitch a) where
   Pitch p1 == Pitch p2 = rep p1 == rep p2 && deg p1 == deg p2
 
@@ -27,14 +36,5 @@ instance IsPitch a => Monoid (Pitch a) where
 instance IsPitch a => Group (Pitch a) where
   invert (Pitch p) = Pitch $ toPitch (-(deg p)) (-(rep p))
 
-instance IsPitch (Int, Int) where
-  deg = fst
-  rep = snd
-  toPitch d r = (d, r)
-
 iPitch :: Int -> Int -> Pitch (Int, Int)
 iPitch d r = Pitch (d, r)
-
-instance IsPitch Int where
-  deg = id
-  toPitch i _ = i

@@ -5,7 +5,6 @@ import MusicalKey.Tuning.Tuning (Tuning, (!>!))
 
 data Mode out = forall t. (Tuning t out) => Mode Degree [Degree] t
 
-
 root :: Mode out -> Degree
 root (Mode r _ _) = r
 
@@ -23,3 +22,5 @@ scalePitch r s p =
 
 instance Tuning (Mode out) out where
   Mode r s t !>! p = t !>! scalePitch r s p
+
+

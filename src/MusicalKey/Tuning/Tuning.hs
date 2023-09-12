@@ -36,7 +36,7 @@ data TunedByFunc out = forall ts. (TuningSystem ts) => TunedByFunc ts (Interval 
 instance Tuning (TunedByFunc out) out where
   TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !% pitch
 
-data TunedByMap out= forall p. (IsPitch p) => TunedByMap (Map (Pitch p) out)
+data TunedByMap out = forall p. (IsPitch p) => TunedByMap (Map (Pitch p) out)
 
 instance Tuning (TunedByMap out) out where
   TunedByMap mapping !>! pitch = mapping M.! convertPitch pitch
@@ -45,4 +45,3 @@ data TunedDirect out = forall p. (IsPitch p) => TunedDirect (Pitch p -> out)
 
 instance Tuning (TunedDirect out) out where
   TunedDirect tFunc !>! pitch = tFunc $ convertPitch pitch
-

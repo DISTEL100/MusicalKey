@@ -1,8 +1,11 @@
 module MusicalKey.Pitch (module MusicalKey.Pitch) where 
 
 import Data.Group (Group (invert))
+
 type Equave = Int
+
 type Degree = Int
+
 class IsPitch a where
   degree :: Pitch a -> Degree
   equave :: Pitch a -> Equave
@@ -16,6 +19,9 @@ getIsPitch (Pitch a) = a
 
 convertPitch :: (IsPitch a, IsPitch b) => Pitch a -> Pitch b
 convertPitch p = toPitch (degree p) (equave p)
+
+pit :: Int -> Int -> Pitch (Int, Int)
+pit a b = Pitch (a,b)
 
 instance IsPitch (Int, Int) where
   degree = fst . getIsPitch

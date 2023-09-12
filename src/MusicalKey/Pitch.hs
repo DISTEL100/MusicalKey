@@ -10,16 +10,19 @@ class IsPitch a where
 
 newtype Pitch a = Pitch a deriving (Show)
 
-getP :: Pitch a -> a
-getP (Pitch a) = a
+getIsPitch :: Pitch a -> a
+getIsPitch (Pitch a) = a
+
+convertPitch :: (IsPitch a, IsPitch b) => Pitch a -> Pitch b
+convertPitch p = toPitch (deg p) (rep p)
 
 instance IsPitch (Int, Int) where
-  deg = fst . getP
-  rep = snd . getP
+  deg = fst . getIsPitch
+  rep = snd . getIsPitch
   toPitch d r = Pitch (d, r)
 
 instance IsPitch Int where
-  deg = getP
+  deg = getIsPitch
   toPitch i _ = Pitch i
 
 instance IsPitch a => Eq (Pitch a) where

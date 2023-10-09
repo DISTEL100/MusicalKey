@@ -32,7 +32,7 @@ quintA440 :: TunedByRef Frequency
 quintA440 = TunedByRef quint a4 (Freq 440)
 
 chromaticEt12A440 :: Mode Frequency
-chromaticEt12A440 = Mode 0 [0..11] et12A440
+chromaticEt12A440 = Mode (Root 0) (Scale [0..11]) et12A440
 
 chromaticEt12M64 :: Mode MidiNote
-chromaticEt12M64 = Mode 0 [0..11] et12M64
+chromaticEt12M64 = Mode (Root 0) (Scale [0..11]) et12M64

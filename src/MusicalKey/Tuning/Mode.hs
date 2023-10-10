@@ -6,7 +6,9 @@ import MusicalKey.Tuning.Tuning (Tuning, (!>!))
 newtype Root = Root Degree deriving Show
 newtype Scale = Scale [Degree] deriving Show
 
-data Mode out = forall t. (Tuning t out) => Mode {root::Root, scale:: Scale, tun :: t out }
+data Mode out = forall t. (Tuning t out, Show (t out)) => Mode {root::Root, scale:: Scale, tun :: t out } 
+
+deriving instance (Show out) => Show (Mode out)
 
 scalePitch :: (IsPitch p) => Degree -> [Degree] -> Pitch p -> Pitch p
 scalePitch r s p =

@@ -1,4 +1,3 @@
-{-# LANGUAGE FunctionalDependencies #-}
 module MusicalKey.Tuning.Tuning (midiNote, MidiNote, (!>!), TunedByFunc (TunedByFunc), TunedByMap (TunedByMap), TunedByRef (TunedByRef), TunedDirect (TunedDirect), Tuning) where
 
 import Data.Group (Group ((~~)))
@@ -19,7 +18,9 @@ midiNote a
 class Tuning (a) out  where
   (!>!) :: forall p. (IsPitch p) => a out -> Pitch p -> out
 
-data TunedByRef out = forall p ts. (IsPitch p, TuningSystem ts) => TunedByRef ts (Pitch p) out
+data TunedByRef out = forall p ts. (IsPitch p, Show p, Show ts, TuningSystem ts) => TunedByRef ts (Pitch p) out 
+
+deriving instance (Show out) => Show (TunedByRef out)
 
 instance Tuning TunedByRef Frequency where
   TunedByRef tSystem refPitch refC !>! pitch =
@@ -37,12 +38,14 @@ data TunedByFunc out = forall ts. (TuningSystem ts) => TunedByFunc ts (Interval 
 instance Tuning TunedByFunc out where
   TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !% pitch
 
-data TunedByMap out = forall p. (IsPitch p) => TunedByMap (Map (Pitch p) out)
+data TunedByMap out = forall p. (IsPitch p, Show p) => TunedByMap (Map (Pitch p) out)
+
+deriving instance (Show out) => Show (TunedByMap out)
 
 instance Tuning TunedByMap out where
   TunedByMap mapping !>! pitch = mapping M.! convertPitch pitch
 
-data TunedDirect out = forall p. (IsPitch p) => TunedDirect (Pitch p -> out)
+data TunedDirect out = forall p. (IsPitch p ) => TunedDirect (Pitch p -> out)
 
 instance Tuning TunedDirect out where
   TunedDirect tFunc !>! pitch = tFunc $ convertPitch pitch

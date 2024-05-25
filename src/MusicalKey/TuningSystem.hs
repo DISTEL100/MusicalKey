@@ -4,30 +4,30 @@ import Data.Group (Group (pow), invert )
 import Data.Map qualified as M
 import Data.Set qualified as Set
 import MusicalKey.Interval ( Interval (Cent, Ratio) )
-import MusicalKey.Pitch (IsPitch (degree, equave, toPitch), Pitch) 
+import MusicalKey.Pitch
 import Data.List (sort)
 
-class TuningSystem a where
-  (!%) :: forall b. (IsPitch b) => a -> Pitch b -> Interval
+class TuningSystem a pitch where
+  (!%) :: a -> pitch -> Interval
 
-instance TuningSystem (Set.Set Interval) where
+instance (IsPitch p) => TuningSystem (Set.Set Interval) p where
   set !% pitch
     | Set.null set = mempty
-    | degree pitch <= 0 =
-        let dm = divMod (pred (degree pitch)) $ Set.size set
-         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + equave pitch)
-    | otherwise = invert $ set !% invert pitch
+    | degree (Pitch pitch) <= 0 =
+        let dm = divMod (pred (degree (Pitch pitch))) $ Set.size set
+         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + equave  (Pitch pitch))
+    | otherwise = invert $ set !% (\(Pitch a) -> a) (invert (Pitch pitch))
 
-instance TuningSystem [Interval] where
+instance (IsPitch p) => TuningSystem [Interval] (p) where
   (!%) = (!%) . Set.fromList
 
-instance (IsPitch b) => TuningSystem (M.Map (Pitch b) Interval)  where
+instance (IsPitch b) => TuningSystem (M.Map (Pitch b) Interval) (Pitch b)  where
   freqMap !% p = freqMap M.! toPitch (degree p) (equave p)
 
-degreesBetween :: forall a b . (IsPitch b, TuningSystem a ) => a -> Pitch b -> Pitch b -> Int
+degreesBetween :: forall a b . (IsPitch b, TuningSystem a (Pitch b) ) => a -> Pitch b -> Pitch b -> Int
 degreesBetween ts p1 p2 = degreesBetween' ts p1 p2 0
 
-degreesBetween' :: forall a b . (IsPitch b, TuningSystem a) => a -> Pitch b -> Pitch b -> Int -> Int
+degreesBetween' :: forall a b . (IsPitch b, TuningSystem a (Pitch b)) => a -> Pitch b -> Pitch b -> Int -> Int
 degreesBetween' ts p1 p2 acc
   | ts !% p1 == ts !% p2 = acc
   | ts !% p1 < ts !% p2 = degreesBetween' ts (toPitch (degree p1 + 1) (equave p1)) p2 (acc + 1)

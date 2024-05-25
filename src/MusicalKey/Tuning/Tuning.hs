@@ -1,10 +1,7 @@
-module MusicalKey.Tuning.Tuning (midiNote, MidiNote, (!>!), TunedByFunc (TunedByFunc), TunedByMap (TunedByMap), TunedByRef (TunedByRef), TunedDirect (TunedDirect), Tuning) where
+module MusicalKey.Tuning.Tuning (module MusicalKey.Tuning.Tuning) where
 
 import Data.Group (Group ((~~)))
-import Data.Map (Map)
-import Data.Map qualified as M
 import MusicalKey.Interval (Frequency, Interval, (<>>))
-import MusicalKey.Pitch (IsPitch, Pitch, convertPitch)
 import MusicalKey.TuningSystem (TuningSystem (..), degreesBetween)
 
 newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
@@ -15,37 +12,15 @@ midiNote a
   | a < 0 = error "a MidiNote must be greater or equal 0"
   | otherwise = MidiNote a
 
-class Tuning (a) out  where
-  (!>!) :: forall p. (IsPitch p) => a out -> Pitch p -> out
+class Tuning sys pitch out  where
+  (!>!) :: sys -> pitch -> out
 
-data TunedByRef out = forall p ts. (IsPitch p, Show p, Show ts, TuningSystem ts) => TunedByRef ts (Pitch p) out 
+data TunedByRef ts refP refOut = TunedByRef ts refP refOut
 
-deriving instance (Show out) => Show (TunedByRef out)
+instance (TuningSystem ts refP) =>
+  Tuning (TunedByRef ts refP Frequency) refP Frequency where
+    TunedByRef tSystem refPitch refC !>! pitch =
+     let interval = tSystem !% pitch :: Interval
+         refInterval = tSystem !% refPitch :: Interval
+      in refC <>> (interval ~~ refInterval)
 
-instance Tuning TunedByRef Frequency where
-  TunedByRef tSystem refPitch refC !>! pitch =
-    let interval = tSystem !% pitch :: Interval
-        refInterval = tSystem !% refPitch :: Interval
-     in refC <>> (interval ~~ refInterval)
-
-instance Tuning TunedByRef MidiNote where
-  TunedByRef tSystem refPitch refMidiNote@(MidiNote m) !>! pitch
-    | refPitch == convertPitch pitch = refMidiNote
-    | otherwise = MidiNote $ m + degreesBetween tSystem refPitch (convertPitch pitch)
-
-data TunedByFunc out = forall ts. (TuningSystem ts) => TunedByFunc ts (Interval -> out)
-
-instance Tuning TunedByFunc out where
-  TunedByFunc tSystem tFunc !>! pitch = tFunc $ tSystem !% pitch
-
-data TunedByMap out = forall p. (IsPitch p, Show p) => TunedByMap (Map (Pitch p) out)
-
-deriving instance (Show out) => Show (TunedByMap out)
-
-instance Tuning TunedByMap out where
-  TunedByMap mapping !>! pitch = mapping M.! convertPitch pitch
-
-data TunedDirect out = forall p. (IsPitch p ) => TunedDirect (Pitch p -> out)
-
-instance Tuning TunedDirect out where
-  TunedDirect tFunc !>! pitch = tFunc $ convertPitch pitch

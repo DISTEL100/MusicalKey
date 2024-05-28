@@ -1,40 +1,52 @@
 module MusicalKey.TuningSystem (module MusicalKey.TuningSystem) where
 
-import Data.Group (Group (pow), invert )
-import Data.Map qualified as M
+import Data.Data
+import Data.Group (Group (pow), invert)
+import Data.List (findIndex, sort)
 import Data.Set qualified as Set
-import MusicalKey.Interval ( Interval (Cent, Ratio) )
+import MusicalKey.Interval (Frequency, Interval (Cent, Ratio))
 import MusicalKey.Pitch
-import Data.List (sort)
 
-class TuningSystem a pitch where
-  (!%) :: a -> pitch -> Interval
+-- TuningSystem
+class TuningSystem sys pitch where
+  (!%) :: Proxy sys -> pitch -> Interval
 
-instance (IsPitch p) => TuningSystem (Set.Set Interval) p where
-  set !% pitch
-    | Set.null set = mempty
-    | degree (Pitch pitch) <= 0 =
-        let dm = divMod (pred (degree (Pitch pitch))) $ Set.size set
-         in Set.elemAt (snd dm) set <> pow (Set.findMax set) (fst dm + equave  (Pitch pitch))
-    | otherwise = invert $ set !% (\(Pitch a) -> a) (invert (Pitch pitch))
+indexSetByDegree :: Set.Set Interval -> Degree -> Interval
+indexSetByDegree set pitch =
+  let setSize = Set.size set
+      index = pitch `mod` setSize
+   in Set.elemAt index set
 
-instance (IsPitch p) => TuningSystem [Interval] (p) where
-  (!%) = (!%) . Set.fromList
+-- Todo negative degree/octave
+indexSetByDegreeEquave :: Set.Set Interval -> WPitch -> Interval
+indexSetByDegreeEquave set (deg, oct) =
+  let setSize = Set.size set
+      (degMod, degDiv) = deg `divMod` setSize
+      octaveInterval = Set.findMax set
+      intervalDeg = Set.elemAt degMod set
+   in intervalDeg <> pow octaveInterval (oct + degDiv)
 
-instance (IsPitch b) => TuningSystem (M.Map (Pitch b) Interval) (Pitch b)  where
-  freqMap !% p = freqMap M.! toPitch (degree p) (equave p)
+sortedCentSet :: [Double] -> Set.Set Interval
+sortedCentSet cents = Set.fromList $ map Cent (sort cents)
 
-degreesBetween :: forall a b . (IsPitch b, TuningSystem a (Pitch b) ) => a -> Pitch b -> Pitch b -> Int
-degreesBetween ts p1 p2 = degreesBetween' ts p1 p2 0
+ratioSet :: [Rational] -> Set.Set Interval
+ratioSet ratios = Set.fromList $ map Ratio (sort ratios)
 
-degreesBetween' :: forall a b . (IsPitch b, TuningSystem a (Pitch b)) => a -> Pitch b -> Pitch b -> Int -> Int
-degreesBetween' ts p1 p2 acc
-  | ts !% p1 == ts !% p2 = acc
-  | ts !% p1 < ts !% p2 = degreesBetween' ts (toPitch (degree p1 + 1) (equave p1)) p2 (acc + 1)
-  | otherwise = -(degreesBetween' ts p2 p1 acc)
+-- Example TuningSystem Equal temperament
+data ET12 = ET12 
 
-tuningFromCents :: [Double] -> Set.Set Interval
-tuningFromCents cents = Set.fromList $ map Cent ( sort cents )
+et12Intervals :: Set.Set Interval
+et12Intervals = sortedCentSet [100, 200 .. 1200]
 
-tuningFromRatios :: [Rational] -> Set.Set Interval
-tuningFromRatios ratios = Set.fromList $ map Ratio ( sort ratios )
+instance TuningSystem ET12 WPitch where
+  _ !% pitch = indexSetByDegreeEquave et12Intervals pitch
+
+-- Tunings
+data Tuning sys pitch out  = 
+  (TuningSystem sys pitch) => Tuning !sys !(pitch -> out)
+
+-- Example ET12 A440
+et12A440 :: Tuning ET12 WPitch Frequency
+et12A440 = Tuning ET12 (\p -> (Proxy :: Proxy ET12) !% p <>> 440) 
+
+

@@ -6,6 +6,8 @@ type Equave = Int
 
 type Degree = Int
 
+type WPitch = (Degree, Equave)
+
 class IsPitch a where
   degree :: Pitch a -> Degree
   equave :: Pitch a -> Equave

@@ -2,9 +2,9 @@ module MusicalKey.TuningSystem (module MusicalKey.TuningSystem) where
 
 import Data.Data
 import Data.Group (Group (pow), invert)
-import Data.List (findIndex, sort)
+import Data.List (sort)
 import Data.Set qualified as Set
-import MusicalKey.Interval (Frequency, Interval (Cent, Ratio))
+import MusicalKey.Interval (Frequency (Freq), Interval (Cent, Ratio), (<>>))
 import MusicalKey.Pitch
 
 -- TuningSystem
@@ -18,8 +18,8 @@ indexSetByDegree set pitch =
    in Set.elemAt index set
 
 -- Todo negative degree/octave
-indexSetByDegreeEquave :: Set.Set Interval -> WPitch -> Interval
-indexSetByDegreeEquave set (deg, oct) =
+indexSetByWPitch :: Set.Set Interval -> WPitch -> Interval
+indexSetByWPitch set (deg, oct) =
   let setSize = Set.size set
       (degMod, degDiv) = deg `divMod` setSize
       octaveInterval = Set.findMax set
@@ -33,20 +33,10 @@ ratioSet :: [Rational] -> Set.Set Interval
 ratioSet ratios = Set.fromList $ map Ratio (sort ratios)
 
 -- Example TuningSystem Equal temperament
-data ET12 = ET12 
+data ET12 = ET12
 
 et12Intervals :: Set.Set Interval
 et12Intervals = sortedCentSet [100, 200 .. 1200]
 
 instance TuningSystem ET12 WPitch where
-  _ !% pitch = indexSetByDegreeEquave et12Intervals pitch
-
--- Tunings
-data Tuning sys pitch out  = 
-  (TuningSystem sys pitch) => Tuning !sys !(pitch -> out)
-
--- Example ET12 A440
-et12A440 :: Tuning ET12 WPitch Frequency
-et12A440 = Tuning ET12 (\p -> (Proxy :: Proxy ET12) !% p <>> 440) 
-
-
+  _ !% pitch = indexSetByWPitch et12Intervals pitch

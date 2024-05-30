@@ -1,14 +1,10 @@
 module MusicalKey.Tuning.Mode (module MusicalKey.Tuning.Mode) where
 
 import MusicalKey.Pitch
-import MusicalKey.Tuning.Tuning (Tuning, (!>!))
 
 newtype Root = Root Degree deriving Show
 newtype Scale = Scale [Degree] deriving Show
 
-data Mode out = forall t. (Tuning t out, Show (t out)) => Mode {root::Root, scale:: Scale, tun :: t out } 
-
-deriving instance (Show out) => Show (Mode out)
 
 scalePitch :: (IsPitch p) => Degree -> [Degree] -> Pitch p -> Pitch p
 scalePitch r s p =
@@ -18,8 +14,5 @@ scalePitch r s p =
       newRep = equave p + fst dm
       newDeg = s !! snd dm
    in toPitch newDeg newRep
-
-instance Tuning Mode out where
-  Mode (Root r)  (Scale s) t !>! p = t !>! scalePitch r s p
 
 

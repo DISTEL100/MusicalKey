@@ -1,8 +1,10 @@
 module MusicalKey.Tuning.Tuning (module MusicalKey.Tuning.Tuning) where
+import MusicalKey.TuningSystem
+import MusicalKey.Interval
+import MusicalKey.Pitch
+import Data.Data
+import Data.Group
 
-import Data.Group (Group ((~~)))
-import MusicalKey.Interval (Frequency, Interval, (<>>))
-import MusicalKey.TuningSystem (TuningSystem (..), degreesBetween)
 
 newtype MidiNote = MidiNote Int deriving (Enum, Show, Eq, Ord)
 
@@ -12,15 +14,22 @@ midiNote a
   | a < 0 = error "a MidiNote must be greater or equal 0"
   | otherwise = MidiNote a
 
-class Tuning sys pitch out  where
-  (!>!) :: sys -> pitch -> out
+-- Tunings
+class Tuning sys pitch out where
+  (!%%) :: sys -> pitch -> out
 
-data TunedByRef ts refP refOut = TunedByRef ts refP refOut
+tuneByRef :: (TuningSystem sys pitch) => Proxy sys -> (pitch, Frequency) -> pitch -> Frequency
+tuneByRef sys (refPitch, refFreq) pitch =
+  let refInterval = sys !% refPitch
+      interval = sys !% pitch
+      intervalBetween = interval <> invert refInterval
+   in refFreq <>> intervalBetween
 
-instance (TuningSystem ts refP) =>
-  Tuning (TunedByRef ts refP Frequency) refP Frequency where
-    TunedByRef tSystem refPitch refC !>! pitch =
-     let interval = tSystem !% pitch :: Interval
-         refInterval = tSystem !% refPitch :: Interval
-      in refC <>> (interval ~~ refInterval)
+newtype TunedByRef sys pitch out = TunedByRef (pitch, out)
 
+instance (TuningSystem sys pitch) => Tuning (TunedByRef sys pitch Frequency) pitch Frequency where
+  (TunedByRef ref) !%% pitch = tuneByRef (Proxy :: Proxy sys) ref pitch
+
+-- Example ET12 A440
+et12A440 :: TunedByRef ET12 WPitch Frequency
+et12A440 = TunedByRef ((9,4), Freq 440)
